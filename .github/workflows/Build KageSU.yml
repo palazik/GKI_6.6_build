@@ -192,7 +192,7 @@ jobs:
           # Source clone
           echo "Cloning source repository..."
           git clone --depth=1 --branch android15-6.6.77_r00 \
-       https://android.googlesource.com/kernel/common common &
+            https://android.googlesource.com/kernel/common common &
 
           # Clang — only download if cache missed
           if [ "${{ steps.clang-cache.outputs.cache-hit }}" != "true" ]; then
@@ -552,17 +552,6 @@ jobs:
           CONFIG_NO_HZ_IDLE=y
           EOF
           echo "✅ Oryon flags prepared."
-
-      - name: Apply Unicode Bypass Fix
-        if: inputs.unicode_fix
-        working-directory: kernel_workspace/common
-        run: |
-          PATCH_URL="https://github.com/TheWildJames/kernel_patches/raw/main/common/unicode_bypass_fix_6.1+.patch"
-          wget -qO /tmp/ub_fix.patch "$PATCH_URL" 2>/dev/null && \
-            patch -p1 --forward < /tmp/ub_fix.patch || true
-          echo "Unicode fix applied"
-
-      # ── NEW: Memory & Scheduler Optimization Patches (WildKernels) ───────────
       - name: Apply Memory & Scheduler Optimization Patches
         if: inputs.mem_opt_patches
         working-directory: kernel_workspace/common
