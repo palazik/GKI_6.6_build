@@ -192,7 +192,7 @@ jobs:
           # Source clone
           echo "Cloning source repository..."
           git clone --depth=1 --branch android15-6.6.77_r00 \
-  	    https://android.googlesource.com/kernel/common common &
+       https://android.googlesource.com/kernel/common common &
 
           # Clang — only download if cache missed
           if [ "${{ steps.clang-cache.outputs.cache-hit }}" != "true" ]; then
