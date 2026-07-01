@@ -67,11 +67,6 @@ on:
           - 'none'
           - 'thin'
           - 'full'
-      fengchi:
-        description: 'Enable Fengchi / HMBIRD Optimization'
-        required: true
-        type: boolean
-        default: true
       unicode_fix:
         description: 'Enable Unicode Bypass Fix (path traversal protection)'
         required: true
@@ -492,34 +487,6 @@ jobs:
           cat >> common/arch/arm64/configs/gki_defconfig << 'EOF'
           CONFIG_ZRAM_WRITEBACK=y
           CONFIG_ZRAM_MEMORY_TRACKING=y
-          EOF
-
-      - name: ⚙️ Apply Fengchi (HMBIRD) SCHED Patch
-        if: inputs.fengchi
-        run: |
-          cd kernel_workspace/common
-          if [ -d "kernel/sched/hmbird" ]; then
-            echo "✅ Fengchi already natively built into this kernel version!"
-          else
-            echo "⬇️ Fetching Fengchi patch for SM8750..."
-            git clone https://github.com/Numbersf/SCHED_PATCH.git -b "sm8750" /tmp/sched_patch
-            PATCH_FILE="/tmp/sched_patch/fengchi_oneplus_13_b.patch"
-            if [[ -f "$PATCH_FILE" ]]; then
-              cp "$PATCH_FILE" ./
-              dos2unix fengchi_oneplus_13_b.patch
-              patch -p1 -F 3 < fengchi_oneplus_13_b.patch
-              echo "✅ Fengchi patch applied!"
-            else
-              sed -i '1iobj-y += hmbird_patch.o' drivers/Makefile
-              wget -q https://github.com/Numbersf/Action-Build/raw/SukiSU-Ultra/patches/hmbird_patch.patch
-              patch -p1 -F 3 < hmbird_patch.patch
-              echo "✅ OGKI to GKI patch applied!"
-            fi
-          fi
-          cat >> arch/arm64/configs/gki_defconfig << 'EOF'
-          CONFIG_SCHED_CLASS_EXT=y
-          CONFIG_OPLUS_FEATURE_HMBIRD_BOOST=y
-          CONFIG_OPLUS_FEATURE_HMBIRD_SCHED=y
           EOF
 
       - name: Configure SchedUtil Optimizations
@@ -1086,8 +1053,6 @@ jobs:
           export TG_LZ4="${{ github.event.inputs.lz4_enable }}"
           export TG_LZ4KD="${{ github.event.inputs.lz4kd_enable }}"
           export TG_MM="true"
-          export TG_FENGCHI="${{ github.event.inputs.fengchi }}"
-          export TG_HMBIRD="false"
           export TG_UFIX="${{ github.event.inputs.unicode_fix }}"
           export TG_ZWB="${{ github.event.inputs.zram_writeback }}"
           export TG_SCHED="${{ github.event.inputs.schedutil_opt }}"
@@ -1138,7 +1103,6 @@ jobs:
                   feat(e("TG_LZ4"),     "LZ4 1.10.0 + ZSTD 1.5.7"),
                   feat(e("TG_LZ4KD"),  "LZ4KD ZRAM"),
                   feat(e("TG_MM"),      "Multi-Manager Support"),
-                  feat(e("TG_FENGCHI"),"Fengchi Optimization"),
                   feat(e("TG_UFIX"),    "Unicode Bypass Fix"),
                   feat(e("TG_ZWB"),     "ZRAM Writeback"),
                   feat(e("TG_SCHED"),  "SchedUtil Optimizations"),
@@ -1299,7 +1263,6 @@ jobs:
           - **BBRv3:** true (stock)
           - **ADIOS IO:** ${{ github.event.inputs.adios_enable }}
           - **Baseband Guard:** ${{ github.event.inputs.baseband_guard }}
-          - **Fengchi:** ${{ github.event.inputs.fengchi }}
           - **Oryon CPU Optimizations:** ${{ github.event.inputs.cpu_opt }}
           - **Unicode Fix:** ${{ github.event.inputs.unicode_fix }}
           - **WireGuard:** ${{ github.event.inputs.wireguard }}
