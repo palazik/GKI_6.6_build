@@ -205,8 +205,15 @@ jobs:
             git checkout -q android15-6.6.77_r00 2>/dev/null || echo "tag checkout skipped (branch tip already 6.6.77)"
             echo "common version: $(grep -m1 '^SUBLEVEL' Makefile)" )
 
-          echo "Removing ABI protection & dirty suffix..."
-          rm common/android/abi_gki_protected_exports_* 2>/dev/null || true
+          echo "Removing ABI protected exports (bazel-safe) & dirty suffix..."
+          # kleaf lists these files as build INPUTS — deleting them alone breaks
+          # the build ("missing input file"). Must also drop the references.
+          rm -rf common/android/abi_gki_protected_exports_* 2>/dev/null || true
+          perl -pi -e 's/^\s*"protected_exports_list"\s*:\s*"android\/abi_gki_protected_exports_aarch64",\s*$//;' common/BUILD.bazel || true
+          if grep -q '^protected_modules = ' common/modules.bzl 2>/dev/null; then
+            sed -i 's/protected_modules = \[.*\]/protected_modules = []/' common/modules.bzl || true
+          fi
+          perl -pi -e 's/^\s*protected_module_names_list\s*=\s*":gki_(?:aarch64|x86_64)_protected_module_names",\s*$//;' common/BUILD.bazel || true
           for f in common/scripts/setlocalversion; do
             sed -i 's/ -dirty//g' "$f"
             sed -i '$i res=$(echo "$res" | sed '\''s/-dirty//g'\'')' "$f"
