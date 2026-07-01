@@ -890,11 +890,16 @@ jobs:
           sed -i '/^config LSM$/,/^help$/{ /^[[:space:]]*default/ { /baseband_guard/! s/selinux/selinux,baseband_guard/ } }' security/Kconfig
 
       - name: 📦 Add build name
-        run: |
-          cd kernel_workspace
-          sudo sed -i "s/-4k/-palaziks-ShiftPorts/g" ./common/arch/arm64/configs/gki_defconfig
-          sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
-          echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
+  	working-directory: kernel_workspace/common
+  	run: |
+    	  # Force setlocalversion to emit a clean, fixed GKI uname string.
+    	  # SUBLEVEL is read from the Makefile so it always matches the tag (77 here).
+    	  SUBLEVEL=$(grep '^SUBLEVEL = ' Makefile | awk '{print $3}')
+    	  KERNEL_STRING="6.6.${SUBLEVEL}-android15"
+    	  sed -i '$d' scripts/setlocalversion
+    	  echo "echo \"${KERNEL_STRING}-palaziks-ShiftPorts\"" >> scripts/setlocalversion
+    	  chmod +x scripts/setlocalversion
+    	  echo "CONFIG_LOCALVERSION_AUTO=n" >> arch/arm64/configs/gki_defconfig
 
       - name: 🔨 Build Kernel
         run: |
